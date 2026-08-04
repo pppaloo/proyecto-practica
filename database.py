@@ -20,6 +20,13 @@ def crear_tablas():
             ocupado BOOLEAN DEFAULT TRUE
         )
     """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS usuario (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(50) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL
+        )
+    """)
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS pago (
@@ -96,3 +103,30 @@ def insertar_pago(numero_local, tipo, fecha, mes, empresario, rut, descripcion, 
     conn.commit()
     cursor.close()
     conn.close()
+import hashlib
+
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def crear_usuario(username, password):
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO usuario (username, password) VALUES (%s, %s)",
+        (username, hash_password(password))
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+def validar_usuario(username, password):
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id FROM usuario WHERE username = %s AND password = %s",
+        (username, hash_password(password))
+    )
+    resultado = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return resultado is not None

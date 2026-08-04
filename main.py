@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from database import crear_tablas, obtener_pagos_por_tipo, insertar_pago
+from database import crear_tablas, obtener_pagos_por_tipo, insertar_pago, validar_usuario
 
 TIPOS = [
     ("local", "Local"),
@@ -115,7 +115,42 @@ class App(tk.Tk):
         ttk.Button(ventana, text="Guardar", command=guardar).pack(pady=15)
 
 
+class VentanaLogin(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Iniciar sesión")
+        self.geometry("300x180")
+        self.resizable(False, False)
+        self.login_exitoso = False
+
+        ttk.Label(self, text="Usuario:").pack(pady=(20, 0))
+        self.entry_usuario = ttk.Entry(self, width=25)
+        self.entry_usuario.pack()
+
+        ttk.Label(self, text="Contraseña:").pack(pady=(10, 0))
+        self.entry_password = ttk.Entry(self, width=25, show="*")
+        self.entry_password.pack()
+
+        ttk.Button(self, text="Ingresar", command=self.intentar_login).pack(pady=20)
+        self.bind("<Return>", lambda event: self.intentar_login())
+
+    def intentar_login(self):
+        usuario = self.entry_usuario.get()
+        password = self.entry_password.get()
+
+        if validar_usuario(usuario, password):
+            self.login_exitoso = True
+            self.destroy()
+        else:
+            messagebox.showerror("Error", "Usuario o contraseña incorrectos.")
+
+
 if __name__ == "__main__":
     crear_tablas()
-    app = App()
-    app.mainloop()
+
+    login = VentanaLogin()
+    login.mainloop()
+
+    if login.login_exitoso:
+        app = App()
+        app.mainloop()
