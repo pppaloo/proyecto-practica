@@ -62,3 +62,37 @@ def obtener_pagos_por_tipo(tipo, numero_filtro=""):
     cursor.close()
     conn.close()
     return filas
+
+def obtener_o_crear_local(numero, tipo):
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM local WHERE numero = %s", (numero,))
+    resultado = cursor.fetchone()
+
+    if resultado:
+        local_id = resultado[0]
+    else:
+        cursor.execute(
+            "INSERT INTO local (numero, tipo, ocupado) VALUES (%s, %s, %s)",
+            (numero, tipo, True)
+        )
+        conn.commit()
+        local_id = cursor.lastrowid
+
+    cursor.close()
+    conn.close()
+    return local_id
+
+
+def insertar_pago(numero_local, tipo, fecha, mes, empresario, rut, descripcion, valor_diario, fecha_pago, folio):
+    local_id = obtener_o_crear_local(numero_local, tipo)
+
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO pago (local_id, fecha, mes, empresario, rut, descripcion, valor_diario, fecha_pago, folio)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, (local_id, fecha, mes, empresario, rut, descripcion, valor_diario, fecha_pago or None, folio))
+    conn.commit()
+    cursor.close()
+    conn.close()
