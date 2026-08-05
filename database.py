@@ -1,4 +1,5 @@
 import mysql.connector
+import hashlib
 
 def conectar():
     return mysql.connector.connect(
@@ -20,11 +21,12 @@ def crear_tablas():
             ocupado BOOLEAN DEFAULT TRUE
         )
     """)
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS usuario (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        username VARCHAR(50) NOT NULL UNIQUE,
-        password VARCHAR(255) NOT NULL
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(50) NOT NULL UNIQUE,
+            password VARCHAR(255) NOT NULL
         )
     """)
 
@@ -37,7 +39,7 @@ def crear_tablas():
             empresario VARCHAR(150),
             rut VARCHAR(15),
             descripcion VARCHAR(255),
-            valor_diario DECIMAL(10,2),
+            valor DECIMAL(10,2),
             fecha_pago DATE,
             folio VARCHAR(30) UNIQUE,
             FOREIGN KEY (local_id) REFERENCES local(id)
@@ -48,12 +50,13 @@ def crear_tablas():
     cursor.close()
     conn.close()
 
+
 def obtener_pagos_por_tipo(tipo, numero_filtro=""):
     conn = conectar()
     cursor = conn.cursor()
     query = """
         SELECT local.numero, pago.fecha, pago.mes, pago.empresario, pago.rut,
-               pago.descripcion, pago.valor_diario, pago.fecha_pago, pago.folio
+               pago.descripcion, pago.valor, pago.fecha_pago, pago.folio
         FROM pago
         JOIN local ON pago.local_id = local.id
         WHERE local.tipo = %s
@@ -69,6 +72,7 @@ def obtener_pagos_por_tipo(tipo, numero_filtro=""):
     cursor.close()
     conn.close()
     return filas
+
 
 def obtener_o_crear_local(numero, tipo):
     conn = conectar()
@@ -91,22 +95,23 @@ def obtener_o_crear_local(numero, tipo):
     return local_id
 
 
-def insertar_pago(numero_local, tipo, fecha, mes, empresario, rut, descripcion, valor_diario, fecha_pago, folio):
+def insertar_pago(numero_local, tipo, fecha, mes, empresario, rut, descripcion, valor, fecha_pago, folio):
     local_id = obtener_o_crear_local(numero_local, tipo)
 
     conn = conectar()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO pago (local_id, fecha, mes, empresario, rut, descripcion, valor_diario, fecha_pago, folio)
+        INSERT INTO pago (local_id, fecha, mes, empresario, rut, descripcion, valor, fecha_pago, folio)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """, (local_id, fecha, mes, empresario, rut, descripcion, valor_diario, fecha_pago or None, folio))
+    """, (local_id, fecha, mes, empresario, rut, descripcion, valor, fecha_pago or None, folio))
     conn.commit()
     cursor.close()
     conn.close()
-import hashlib
+
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
+
 
 def crear_usuario(username, password):
     conn = conectar()
@@ -118,6 +123,7 @@ def crear_usuario(username, password):
     conn.commit()
     cursor.close()
     conn.close()
+
 
 def validar_usuario(username, password):
     conn = conectar()

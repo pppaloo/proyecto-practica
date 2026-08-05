@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from tkcalendar import DateEntry
 from database import crear_tablas, obtener_pagos_por_tipo, insertar_pago, validar_usuario
+from feriados import dia_habil_para
 
 TIPOS = [
     ("local", "Local"),
@@ -9,8 +11,8 @@ TIPOS = [
     ("lote6", "Lote 6"),
     ("kiosco", "Kiosco"),
 ]
-
-COLUMNAS = ("N° Local", "Fecha", "Mes", "Empresario", "RUT", "Descripción", "Valor Diario", "Fecha Pago", "Folio")
+TIPOS_MENSUALES = ("boleteria", "pescaderia")
+COLUMNAS = ("N° Local", "Fecha", "Mes", "Empresario", "RUT", "Descripción", "Valor", "Fecha Pago", "Folio")
 
 
 class App(tk.Tk):
@@ -71,17 +73,21 @@ class App(tk.Tk):
     def abrir_formulario(self, tipo):
         ventana = tk.Toplevel(self)
         ventana.title("Agregar registro")
-        ventana.geometry("380x560")
+        ventana.geometry("380x620")
         ventana.resizable(True, True)
         campos = {}
+
+        ttk.Label(ventana, text="Fecha").pack(anchor="w", padx=15, pady=(8, 0))
+        selector_fecha = DateEntry(ventana, width=32, date_pattern="yyyy-mm-dd")
+        selector_fecha.pack(padx=15)
+
         etiquetas = [
             ("numero", "N° Local"),
-            ("fecha", "Fecha (YYYY-MM-DD)"),
             ("mes", "Mes"),
             ("empresario", "Empresario"),
             ("rut", "RUT"),
             ("descripcion", "Descripción"),
-            ("valor_diario", "Valor Diario"),
+            ("valor", "Valor Mensual" if tipo in TIPOS_MENSUALES else "Valor Diario"),
             ("fecha_pago", "Fecha Pago (YYYY-MM-DD, opcional)"),
             ("folio", "Folio"),
         ]
@@ -93,16 +99,25 @@ class App(tk.Tk):
             campos[clave] = entry
 
         def guardar():
+            fecha_elegida = selector_fecha.get_date()
+
+            if not dia_habil_para(tipo, fecha_elegida):
+                messagebox.showerror(
+                    "Fecha no válida",
+                    "Este tipo de local no paga domingos ni feriados. Elige otro día."
+                )
+                return
+
             try:
                 insertar_pago(
                     numero_local=campos["numero"].get(),
                     tipo=tipo,
-                    fecha=campos["fecha"].get(),
+                    fecha=fecha_elegida,
                     mes=campos["mes"].get(),
                     empresario=campos["empresario"].get(),
                     rut=campos["rut"].get(),
                     descripcion=campos["descripcion"].get(),
-                    valor_diario=campos["valor_diario"].get(),
+                    valor=campos["valor"].get(),
                     fecha_pago=campos["fecha_pago"].get(),
                     folio=campos["folio"].get(),
                 )
