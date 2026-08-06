@@ -136,3 +136,20 @@ def validar_usuario(username, password):
     cursor.close()
     conn.close()
     return resultado is not None
+def obtener_locales_desocupados():
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("SELECT numero, tipo FROM local WHERE ocupado = FALSE ORDER BY numero")
+    filas = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return filas
+
+
+def cambiar_estado_local(numero, ocupado):
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE local SET ocupado = %s WHERE numero = %s", (ocupado, numero))
+    conn.commit()
+    cursor.close()
+    conn.close()

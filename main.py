@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from tkcalendar import DateEntry
-from database import crear_tablas, obtener_pagos_por_tipo, insertar_pago, validar_usuario
+from database import crear_tablas, obtener_pagos_por_tipo, insertar_pago, validar_usuario, obtener_locales_desocupados, cambiar_estado_local
 from feriados import dia_habil_para
 
 TIPOS = [
@@ -23,6 +23,9 @@ class App(tk.Tk):
 
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill="both", expand=True, padx=10, pady=10)
+
+        boton_desocupados = ttk.Button(self, text="Ver Locales Desocupados", command=self.ver_desocupados)
+        boton_desocupados.pack(pady=(0, 10))
 
         self.tablas = {}
 
@@ -128,6 +131,23 @@ class App(tk.Tk):
                 messagebox.showerror("Error", f"No se pudo guardar:\n{e}")
 
         ttk.Button(ventana, text="Guardar", command=guardar).pack(pady=15)
+
+    def ver_desocupados(self):
+        ventana = tk.Toplevel(self)
+        ventana.title("Locales Desocupados")
+        ventana.geometry("300x400")
+
+        tabla = ttk.Treeview(ventana, columns=("Número", "Tipo"), show="headings")
+        tabla.heading("Número", text="N° Local")
+        tabla.heading("Tipo", text="Tipo")
+        tabla.pack(fill="both", expand=True, padx=10, pady=10)
+
+        for numero, tipo in obtener_locales_desocupados():
+            nombre_tipo = dict(TIPOS).get(tipo, tipo)
+            tabla.insert("", "end", values=(numero, nombre_tipo))
+
+        if not tabla.get_children():
+            ttk.Label(ventana, text="No hay locales desocupados.").pack(pady=20)
 
 
 class VentanaLogin(tk.Tk):
